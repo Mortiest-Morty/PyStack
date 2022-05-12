@@ -12,17 +12,17 @@ class CardCombinations():
 
 	def _init_choose(self):
 		''' init C(k,n) = n!/(k!(n-k)!) '''
-		for i in range(0, self.max_choose+1):
-			for j in range(0, self.max_choose+1):
-				self.C[i*self.max_choose + j] = 0
+		for i in range(0, self.max_choose+1):  # 0~55
+			for j in range(0, self.max_choose+1):  # 0~55
+				self.C[i*self.max_choose + j] = 0  # max_len: 3080
 
 		for i in range(0,self.max_choose+1):
-			self.C[i*self.max_choose] = 1
-			self.C[i*self.max_choose + i] = 1
+			self.C[i*self.max_choose] = 1  # C(0,n) = 1
+			self.C[i*self.max_choose + i] = 1  # C(n,n) = 1
 
-		for i in range(1,self.max_choose+1):
-			for j in range(1,i+1):
-				self.C[i*self.max_choose + j] = self.C[(i-1)*self.max_choose + j-1] + self.C[(i-1)*self.max_choose + j]
+		for i in range(1,self.max_choose+1):  # 1~55  # e.g. 5
+			for j in range(1,i+1):  # e.g. 1~5
+				self.C[i*self.max_choose + j] = self.C[(i-1)*self.max_choose + j-1] + self.C[(i-1)*self.max_choose + j]  # C(k,n) = C(k-1,n-1) + C(k,n-1)
 
 
 	def choose(self, n, k):

@@ -18,19 +18,20 @@ class TerminalEquity():
 		if os.path.exists('src/TerminalEquity/matrices/block_matrix.npy'):
 			self._block_matrix = np.load('src/TerminalEquity/matrices/block_matrix.npy')
 		else:
-			self._block_matrix = self._create_block_matrix()
+			self._block_matrix = self._create_block_matrix()  # 1326, 1326
 
 
 	def set_board(self, board):
 		''' Sets the board cards for the evaluator and creates internal data structures
 		@param: [0-5] :vector of board cards (int)
 		'''
+		# 5, 4, 1326
 		self.board, street, HC = board, card_tools.board_to_street(board), constants.hand_count
 		# set equity matrix
 		if street == 1:
 			self.equity_matrix = self._pf_equity
 		elif street == constants.streets_count:
-			self.equity_matrix = np.zeros([HC,HC], dtype=arguments.dtype)
+			self.equity_matrix = np.zeros([HC,HC], dtype=arguments.dtype)  # 1326, 1326
 			self._set_last_round_equity_matrix(self.equity_matrix, board)
 			self._handle_blocking_cards(self.equity_matrix, board)
 		elif street == 2 or street == 3:
@@ -41,7 +42,7 @@ class TerminalEquity():
 		else:
 			assert(False) # bad street/board
 		# set fold matrix
-		self.fold_matrix = np.ones([HC,HC], dtype=arguments.dtype)
+		self.fold_matrix = np.ones([HC,HC], dtype=arguments.dtype)  # 1326, 1326
 		# setting cards that block each other to zero
 		self._handle_blocking_cards(self.fold_matrix, board)
 
@@ -90,9 +91,9 @@ class TerminalEquity():
 					for p2_card2 in range(p2_card1+1, CC):
 						p2_idx = card_tools.get_hand_index([p2_card1, p2_card2])
 						if p1_card1 == p2_card1 or p1_card1 == p2_card2 or \
-						   p1_card2 == p2_card1 or p1_card2 == p2_card2:
-						   out[p1_idx, p2_idx] = 0
-						   out[p2_idx, p1_idx] = 0
+							p1_card2 == p2_card1 or p1_card2 == p2_card2:
+							out[p1_idx, p2_idx] = 0
+							out[p2_idx, p1_idx] = 0
 		return out
 
 
@@ -105,11 +106,12 @@ class TerminalEquity():
 		'''
 		HC = constants.hand_count
 		# batch eval with only single batch, because its last round
-		strength = evaluator.evaluate_board(board_cards)
+		strength = evaluator.evaluate_board(board_cards)  # 1326
 		# handling hand stregths (winning probs)
-		strength_view_1 = strength.reshape([HC,1])
-		strength_view_2 = strength.reshape([1,HC])
+		strength_view_1 = strength.reshape([HC,1])  # 1326,1
+		strength_view_2 = strength.reshape([1,HC])  # 1,1326
 
+		# a > b -> 1; a < b -> -1; a == b -> 0
 		equity_matrix[:,:]  = (strength_view_1 > strength_view_2).astype(int)
 		equity_matrix[:,:] -= (strength_view_1 < strength_view_2).astype(int)
 
@@ -150,7 +152,7 @@ class TerminalEquity():
 
 
 	def _handle_blocking_cards(self, matrix, board):
-		''' Zeroes entries in an equity matrix that correspond to invalid hands.
+		''' Zeroes entries in an equity matrix that correspond to invalid hands.->
 			A hand is invalid if it shares any cards with the board
 		@param: [I,I] :matrix that needs to be modified
 		@param: [0-5] :vector of board cards

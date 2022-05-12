@@ -19,11 +19,11 @@ class Evaluator():
 		@return [I,2] :matrix that maps [hand_idx] -> [card_1, card_2]
 		'''
 		HC, HCC, CC = constants.hand_count, constants.hand_card_count, constants.card_count
-		out = np.zeros([HC,HCC], dtype=arguments.dtype)
+		out = np.zeros([HC,HCC], dtype=arguments.dtype)  # 1326, 2
 		for card1 in range(CC):
 			for card2 in range(card1+1,CC):
 				idx = card_tools.get_hand_index([card1,card2])
-				out[ idx , 0 ] = card1
+				out[ idx , 0 ] = card1  # corresponding card
 				out[ idx , 1 ] = card2
 		return out
 
@@ -36,9 +36,9 @@ class Evaluator():
 		@return [b]     :batches of evaluated hands strengths
 		(2-7 depends on how many cards are on board (0-5))
 		'''
-		rank = self._texas_lookup[ hands[ : , 0 ] + 54 ]
+		rank = self._texas_lookup[ hands[ : , 0 ] + 54 ]  # 1326
 		for c in range(1, hands.shape[1]):
-			rank = self._texas_lookup[ hands[ : , c ] + rank + 1 ]
+			rank = self._texas_lookup[ hands[ : , c ] + rank + 1 ]  # 1326
 		rank *= mask
 		rank *= -1
 		return rank
@@ -64,11 +64,11 @@ class Evaluator():
 			mask = mask.reshape([-1])
 			return self.evaluate(hands, mask).reshape([batch_size, HC])
 		elif board.ndim == 1:
-			hands = np.zeros([HC, board.shape[0] + HCC], dtype=arguments.int_dtype)
+			hands = np.zeros([HC, board.shape[0] + HCC], dtype=arguments.int_dtype)  # 1326, 7
 			hands[ : ,  :board.shape[0] ] = np.repeat(board.reshape([1,board.shape[0]]), HC, axis=0)
 			hands[ : , -2: ] = self._idx_to_cards.copy()
-			mask = card_tools.get_possible_hands_mask(board)
-			return self.evaluate(hands, mask)
+			mask = card_tools.get_possible_hands_mask(board)  # 1326
+			return self.evaluate(hands, mask)  # 1326
 		else:
 			assert(False) # weird board dim
 

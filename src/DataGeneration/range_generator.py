@@ -14,12 +14,13 @@ class RangeGenerator():
 
 	def _generate_recursion(self, cards, mass):
 		''' Recursively samples a section of the range vector
+		for each data in the batch, sum probs of all possible hand cards equals to 1.
 		@param: [b,j] :section of the range tensor, where j is the length of the range sub-vector
 		@param: [b]   :vector of remaining probability mass for each batch member
 		'''
-		batch_size = cards.shape[0]
+		batch_size = cards.shape[0]  # 100
 		assert(mass.shape[0] == batch_size)
-		card_count = cards.shape[1]
+		card_count = cards.shape[1]  # PH
 		# we terminate recursion at size of 1
 		if card_count == 1:
 			cards[ : , 0 ] = mass.copy() # (b,1) <- (b,)
@@ -43,7 +44,7 @@ class RangeGenerator():
 		''' Samples a batch of ranges with hands sorted by strength on the board.
 		@param: [b,I] :tensor in which to store the sampled ranges
 		'''
-		batch_size = ranges.shape[0]
+		batch_size = ranges.shape[0]  # 100
 		mass = np.ones([batch_size], dtype=arguments.dtype)
 		self._generate_recursion(ranges, mass)
 
@@ -56,15 +57,15 @@ class RangeGenerator():
 		@param: [0-5] :vector of board cards, where card is unique index (int)
 		'''
 		HC = constants.hand_count
-		hand_strengths = evaluator.evaluate_board(board) if board.shape[0] == 5 else hand_strengths
+		hand_strengths = evaluator.evaluate_board(board) if board.shape[0] == 5 else hand_strengths  # 1326
 		# get possible hands mask for particular board
-		possible_hand_indexes = card_tools.get_possible_hands_mask(board).astype(bool)
+		possible_hand_indexes = card_tools.get_possible_hands_mask(board).astype(bool)  # 1326
 		self.possible_hands_count = possible_hand_indexes.sum()
-		self.possible_hands_mask = possible_hand_indexes.reshape([1,-1])
+		self.possible_hands_mask = possible_hand_indexes.reshape([1,-1])  # 1, 1326
 		# non_coliding_strengths shape: [self.possible_hands_count]
 		non_coliding_strengths = hand_strengths[ possible_hand_indexes ]
 		order = np.argsort(non_coliding_strengths)
-		self.reverse_order = np.argsort(order)
+		self.reverse_order = np.argsort(order)  # reverse argsort
 		self.reverse_order = self.reverse_order.reshape([1,-1]) # (1,PH)
 
 
@@ -75,17 +76,18 @@ class RangeGenerator():
 			recursing on the two halfs.
 		@param: [b,I] :tensor in which to store the sampled ranges
 		'''
+		# 100, PH
 		batch_size, num_possible_hands = ranges.shape[0], self.possible_hands_count
-		self.sorted_range = np.zeros([batch_size, num_possible_hands], dtype=arguments.dtype)
+		self.sorted_range = np.zeros([batch_size, num_possible_hands], dtype=arguments.dtype)  # 100, PH
 		self._generate_sorted_range(self.sorted_range)
 		# we have to reorder the range back to undo the sort by strength
 		# broadcasting reverse_order: [1, possible_hands] -> [batch_size, possible_hands]
-		index = np.repeat(self.reverse_order.reshape([1,-1]), batch_size, axis=0)
+		index = np.repeat(self.reverse_order.reshape([1,-1]), batch_size, axis=0)  # 100, PH
 		self.reordered_range = np_gather(self.sorted_range, axis=1, index=index)
 		# broadcasting mask: [1, possible_hands] -> [batch_size, possible_hands]
-		mask = np.repeat(self.possible_hands_mask.reshape([1,-1]), batch_size, axis=0)
+		mask = np.repeat(self.possible_hands_mask.reshape([1,-1]), batch_size, axis=0)  # 100, PH
 		ranges.fill(0)
-		ranges[mask] = self.reordered_range.reshape([-1])
+		ranges[mask] = self.reordered_range.reshape([-1])  # 100*PH for the porpose of assignment
 
 
 
@@ -95,10 +97,10 @@ def np_gather(a, axis, index):
 	expanded_index = []
 	for i in range(a.ndim):
 		if axis==i:
-			expanded_index.append( index )
+			expanded_index.append( index )  # 100, PH
 		else:
 			shape = [-1 if i==j else 1 for j in range(a.ndim)]
-			expanded_index.append( np.arange(a.shape[i]).reshape(shape) )
+			expanded_index.append( np.arange(a.shape[i]).reshape(shape) )  # 100, 1
 	return a[tuple(expanded_index)]
 
 

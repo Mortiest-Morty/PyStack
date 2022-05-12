@@ -53,7 +53,7 @@ class Resolving():
 		if opponent_range is not None and opponent_cfvs is not None: raise(Exception('only 1 var can be passed'))
 		if opponent_range is None and opponent_cfvs is None: raise(Exception('one of those vars must be passed'))
 		# opponent_cfvs = None if we only need to resolve first node
-		batch_size = player_range.shape[0]
+		batch_size = player_range.shape[0]  # 100
 		self._create_lookahead_tree(node)
 		self.lookahead = Lookahead(self.lookahead_tree, self.terminal_equity, batch_size)
 		if self.verbose > 0: t0 = time.time()

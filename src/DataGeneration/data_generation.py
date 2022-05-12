@@ -30,8 +30,8 @@ class DataGeneration():
 		self.term_eq = TerminalEquity()
 		# main vars
 		HC, PC = constants.hand_count, constants.players_count
-		self.target_size = HC * PC
-		self.input_size = HC * PC + 1
+		self.target_size = HC * PC  # 1326 * 2
+		self.input_size = HC * PC + 1  # 1326 * 2 + 1
 
 
 	def solve_root_node(self, board, batch_size):
@@ -39,16 +39,16 @@ class DataGeneration():
 		@param: [0-5] :vector of board cards, where card is unique index (int)
 		@param: int   :batch of how many situations are evaluated simultaneously (usually will be = 1)
 		'''
-		HC, PC = constants.hand_count, constants.players_count
+		HC, PC = constants.hand_count, constants.players_count  # 1326, 2
 		# set board in terminal equity and range generator
 		self.term_eq.set_board(board)
-		hand_strengths = self.term_eq.get_hand_strengths() # [I]
+		hand_strengths = self.term_eq.get_hand_strengths() # [I]  1326
 		self.range_generator.set_board(hand_strengths, board)
 		# init inputs and outputs
-		targets = np.zeros([batch_size, self.target_size], dtype=arguments.dtype)
-		inputs = np.zeros([batch_size, self.input_size], dtype=arguments.dtype)
+		targets = np.zeros([batch_size, self.target_size], dtype=arguments.dtype)  # 100, 1326 * 2
+		inputs = np.zeros([batch_size, self.input_size], dtype=arguments.dtype)  # 100, 1326 * 2 + 1
 		# generating ranges
-		ranges = np.zeros([PC, batch_size, HC], dtype=arguments.dtype)
+		ranges = np.zeros([PC, batch_size, HC], dtype=arguments.dtype)  # 2, 100, 1326
 		for player in range(PC):
 			self.range_generator.generate_range(ranges[player])
 		# put generated ranges into inputs
@@ -145,25 +145,25 @@ class DataGeneration():
 		@param: str :to approximate current round "root_nodes"/"leaf_nodes"
 		@param: int :starting index for naming files
 		'''
-		card_count = constants.card_count
+		card_count = constants.card_count  # 52
 		# set up scalar variables
 		self.street = street
-		num_board_cards = constants.board_card_count[self.street-1]
-		batch_size = arguments.gen_batch_size
-		num_different_boards = arguments.gen_different_boards
-		total_situations = batch_size * num_different_boards
-		num_files = arguments.gen_num_files
-		num_batches_in_file = total_situations // num_files
-		num_different_boards_per_file = num_different_boards // num_files
+		num_board_cards = constants.board_card_count[self.street-1]  # 5
+		batch_size = arguments.gen_batch_size  # 100
+		num_different_boards = arguments.gen_different_boards  # 2
+		total_situations = batch_size * num_different_boards  # 200
+		num_files = arguments.gen_num_files  # 1
+		num_batches_in_file = total_situations // num_files  # 200
+		num_different_boards_per_file = num_different_boards // num_files  # 2
 		for self.counter in range(starting_idx,  starting_idx + num_files):
-			TARGETS = np.zeros([num_batches_in_file, self.target_size], dtype=arguments.dtype)
-			INPUTS =  np.zeros([num_batches_in_file, self.input_size],  dtype=arguments.dtype)
-			BOARDS = np.zeros([num_different_boards_per_file, num_board_cards], dtype=arguments.dtype)
+			TARGETS = np.zeros([num_batches_in_file, self.target_size], dtype=arguments.dtype)  # 200, 1326 * 2
+			INPUTS =  np.zeros([num_batches_in_file, self.input_size],  dtype=arguments.dtype)  # 200, 1326 * 2 + 1
+			BOARDS = np.zeros([num_different_boards_per_file, num_board_cards], dtype=arguments.dtype)  # 2, 5
 			for b in range(num_different_boards_per_file):
 				t0 = time.time()
 				# create random board
 				if self.street == 1: board = np.zeros([], dtype=arguments.int_dtype)
-				else: board = np.random.choice(card_count, size=num_board_cards, replace=False)
+				else: board = np.random.choice(card_count, size=num_board_cards, replace=False)  # 5 random cards from 52 cards
 				# init targets, inputs and solve it
 				if approximate == 'root_nodes':
 					inputs, targets = self.solve_root_node(board, batch_size)

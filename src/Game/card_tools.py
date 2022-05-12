@@ -56,12 +56,12 @@ class CardTools():
 				which is `1` if the hand shares no cards with the board and `0` otherwise
 		'''
 		HC, CC = constants.hand_count, constants.card_count
-		out = np.zeros([HC], dtype=arguments.int_dtype)
+		out = np.zeros([HC], dtype=arguments.int_dtype)  # 1326
 		if board.ndim == 0 or board.shape[0] == 0:
 			out.fill(1)
 			return out
 
-		used = np.zeros([CC], dtype=bool)
+		used = np.zeros([CC], dtype=bool)  # 52
 		for card in board:
 			used[ card ] = 1
 
