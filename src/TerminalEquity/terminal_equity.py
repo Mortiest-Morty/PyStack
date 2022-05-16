@@ -34,9 +34,9 @@ class TerminalEquity():
 			self.equity_matrix = np.zeros([HC,HC], dtype=arguments.dtype)  # 1326, 1326
 			self._set_last_round_equity_matrix(self.equity_matrix, board)
 			self._handle_blocking_cards(self.equity_matrix, board)
-		elif street == 2 or street == 3:
+		elif street == 2 or street == 3: # e.g. 3
 			self.equity_matrix = np.zeros([HC,HC], dtype=arguments.dtype)
-			last_round_boards = card_tools.get_last_round_boards(board)
+			last_round_boards = card_tools.get_last_round_boards(board)  # 48, 5
 			self._set_transitioning_equity_matrix(self.equity_matrix, last_round_boards, street)
 			self._handle_blocking_cards(self.equity_matrix, board)
 		else:
@@ -127,26 +127,26 @@ class TerminalEquity():
 		HC, num_boards = constants.hand_count, last_round_boards.shape[0]
 		BCC, CC = constants.board_card_count, constants.card_count
 		# evaluating all possible last round boards
-		strength = evaluator.evaluate_board(last_round_boards) # [b,I]
+		strength = evaluator.evaluate_board(last_round_boards) # [b,I] 48, 1326
 		# strength from player 1 perspective for all the boards and all the card combinations
 		strength_view_1 = strength.reshape([num_boards,HC,1])
 		# strength from player 2 perspective
 		strength_view_2 = strength.reshape([num_boards,1,HC])
 		#
-		player_possible_mask = (strength < 0).astype(int)
+		player_possible_mask = (strength < 0).astype(int)  # !strength >= 0?
 
 		for i in range(num_boards):
 			possible_mask = player_possible_mask[i].reshape([1,HC]) * player_possible_mask[i].reshape([HC,1])
 			# handling hand stregths (winning probs)
 			matrix_mem = (strength_view_1[i] > strength_view_2[i]).astype(int)
-			matrix_mem *= possible_mask[i]
+			matrix_mem *= possible_mask[i]  # !possible_mask?
 			equity_matrix[:,:] += matrix_mem
 
 			matrix_mem = (strength_view_1[i] < strength_view_2[i]).astype(int)
 			matrix_mem *= possible_mask[i]
 			equity_matrix[:,:] -= matrix_mem
 		# normalize sum
-		num_possible_boards = card_combinations.count_last_boards_possible_boards(street)
+		num_possible_boards = card_combinations.count_last_boards_possible_boards(street)  # 46
 		equity_matrix[:,:] *= (1 / num_possible_boards)
 
 

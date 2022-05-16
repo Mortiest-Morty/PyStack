@@ -36,8 +36,8 @@ class CardCombinations():
 		@return int :number of possible last round boards
 		'''
 		BCC, SC, CC = constants.board_card_count, constants.streets_count, constants.card_count
-		used_cards = BCC[street-1]
-		new_cards = BCC[SC-1] - BCC[street-1]
+		used_cards = BCC[street-1]  # 4
+		new_cards = BCC[SC-1] - BCC[street-1]  # 1
 		return card_combinations.choose(CC - used_cards, new_cards)
 
 

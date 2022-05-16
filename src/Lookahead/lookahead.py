@@ -298,18 +298,18 @@ class Lookahead():
 			# ranges.shape = [ self.num_pot_sizes x self.batch_size, P, I ]
 			ranges = self._get_ranges_from_transitioning_nodes()
 			# order ranges to same order as trained examples of neural network
-			if self.tree.current_player == P1:
+			if self.tree.current_player == P1:  # pre-flop
 				temp = ranges.copy()
-				ranges[ : , P1, : ] = temp[ : , P2, : ]
-				ranges[ : , P2, : ] = temp[ : , P1, : ]
+				ranges[ : , P1, : ] = temp[ : , P2, : ]  # -> 0: P2
+				ranges[ : , P2, : ] = temp[ : , P1, : ]  # -> 1: P1
 			# use neural net to approximate cfvs
 			# cfvs.shape = [ self.num_pot_sizes x self.batch_size, P, I ]
 			approximated_cfvs = self.cfvs_approximator.evaluate_ranges(ranges)
 			# now the neural net outputs for P1 and P2 respectively, so we need to swap the output values if necessary
 			if self.tree.current_player == P2:
 				temp = approximated_cfvs.copy()
-				approximated_cfvs[ : , P1, : ] = temp[ : , P2, : ]
-				approximated_cfvs[ : , P2, : ] = temp[ : , P1, : ]
+				approximated_cfvs[ : , P1, : ] = temp[ : , P2, : ]  # -> 0: P2
+				approximated_cfvs[ : , P2, : ] = temp[ : , P1, : ]  # -> 1: P1
 			# store outputs into respective nodes
 			self._store_cfvs_to_transitioning_nodes(approximated_cfvs)
 		# equities of all other nodes are easily computable
@@ -331,7 +331,7 @@ class Lookahead():
 		# multiply all equities (from neural network and terminal equity) by pot scale factor
 		for d in range(1, self.depth):
 			# [A{d-1}, B{d-2}, NTNAN{d-2}, b, P, I] *= [A{d-1}, B{d-2}, NTNAN{d-2}, b, P, I]
-			self.layers[d].cfvs *= self.layers[d].pot_size
+			self.layers[d].cfvs *= self.layers[d].pot_size  # *make it large
 
 
 
@@ -398,8 +398,9 @@ class Lookahead():
 	def _get_ranges_from_transitioning_nodes(self):
 		''' gets ranges of all states that game didin't end and is transitioning to next round/street '''
 		HC, PC, batch_size = constants.hand_count, constants.players_count, self.batch_size
+		# p, 100, 2, 1326
 		ranges = np.zeros([self.num_pot_sizes, batch_size, PC, HC], dtype=arguments.dtype)
-		for d in range(1,self.depth):
+		for d in range(1,self.depth):  # 1 ~ d-1
 			layer = self.layers[d]
 			if d > 1 or self.first_call_transition:
 				# if there's only 1 parent, then it should've been an all in, so skip this next_street_box calculation
@@ -410,6 +411,7 @@ class Lookahead():
 					ranges_batch = layer.ranges[ 1, p_start:p_end, : , : , : , : ].reshape([-1, batch_size, PC, HC])
 					# [sliced(PS), b, P, I] = [(B{d-2} - 1) x NTNAN{d-2}, b, P, I]
 					ranges[ layer.indices[0]:layer.indices[1] , : , : , : ] = ranges_batch.copy()
+		# b*p, P, I
 		return ranges.reshape([-1,PC,HC])
 
 	def _store_cfvs_to_transitioning_nodes(self, approximated_cfvs):

@@ -122,7 +122,7 @@ class NextRoundValue():
 		self.iter += 1
 		# check to approximate leafs or next street nodes + avg them
 		if self.iter > self.num_leaf_nodes_approximation_iters:
-			BC = self.next_boards_count
+			BC = self.next_boards_count  # e.g. 48
 			neural_network = self.next_street_nn
 			nn_inputs = self.next_round_inputs
 			nn_outputs = self.next_round_values
@@ -144,8 +144,8 @@ class NextRoundValue():
 		ranges_sum = np.sum(ranges, axis=3) # [b,B,P] = sum([b,B,P,I], axis=2)
 		# save var for later on to normalize output values (swaped just like at lookahead.get_results)
 		values_norm = np.zeros_like(ranges_sum)
-		values_norm[:,:,0] = ranges_sum[:,:,1].copy()
-		values_norm[:,:,1] = ranges_sum[:,:,0].copy()
+		values_norm[:,:,0] = ranges_sum[:,:,1].copy()  # -> 0: P1
+		values_norm[:,:,1] = ranges_sum[:,:,0].copy()  # -> 1: P2
 		# eliminating division by 0 and normalizing ranges
 		ranges_sum[ ranges_sum == 0 ] = 1
 		ranges /= np.expand_dims(ranges_sum, axis=-1) # [b,B,P,I] /= [b,B,P,1]
@@ -167,8 +167,8 @@ class NextRoundValue():
 		# we only use cfvs generated from root nodes (when transitioning from one street to another)
 		if self.iter > arguments.cfr_skip_iters and self.iter > self.num_leaf_nodes_approximation_iters:
 			# save values in memory for later (use for self.get_stored_cfvs_of_all_next_round_boards())
-			self.cumulative_cfvs += nn_outputs
-			self.cumulative_norm += values_norm
+			self.cumulative_cfvs += nn_outputs  # [b,B,P,I]
+			self.cumulative_norm += values_norm  # [b,B,P]
 		return current_board_values
 
 

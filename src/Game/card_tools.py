@@ -153,10 +153,10 @@ class CardTools():
 		'''
 		BCC, SC = constants.board_card_count, constants.streets_count
 		street = self.board_to_street(board)
-		boards_count = card_combinations.count_last_street_boards(street)
-		out = np.zeros([ boards_count, BCC[SC-1] ], dtype=arguments.int_dtype)
+		boards_count = card_combinations.count_last_street_boards(street)  # 48
+		out = np.zeros([ boards_count, BCC[SC-1] ], dtype=arguments.int_dtype)  # 48, 5
 		boards = [out,1] # (boards, index)
-		cur_board = np.zeros([ BCC[SC-1] ], dtype=arguments.dtype)
+		cur_board = np.zeros([ BCC[SC-1] ], dtype=arguments.dtype)  # 5
 		if board.ndim > 0:
 			for i in range(board.shape[0]):
 				cur_board[i] = board[i] + 1
