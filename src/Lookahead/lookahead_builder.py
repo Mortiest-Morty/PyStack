@@ -75,7 +75,7 @@ class LookaheadBuilder():
 		assert(self.lookahead.tree.street >= 1 and self.lookahead.tree.street <= constants.streets_count)
 		layers = self.lookahead.layers
 		# which player acts at particular depth
-		layers[0].acting_player = 0
+		layers[0].acting_player = 0  # ! why can't not be 1, e.g. flop, turn, river round
 		for d in range(1, self.lookahead.depth+1):  # 1~d
 			layers[d].acting_player = 1 - layers[d-1].acting_player
 		# compute the node counts
@@ -210,10 +210,11 @@ class LookaheadBuilder():
 					# we need to make sure that even though there are fewer actions,
 					# the last action/allin is has the same last index as if we had full number of actions
 					existing_num_nonallin_bets = existing_num_bets - 1
+					# !range(2, 2+existing_num_nonallin_bets)?
 					for b in range(2, existing_num_nonallin_bets): # 2, because 0 - Fold, 1 - Call, 2 and more - bets, N - all-in
 						action_id = len(node.children) - b
 						next_node, next_action = node.children[action_id], node.actions[action_id]
-						action_id = self.lookahead.layers[depth].num_actions - b # we manually set the action_id as the last action (allin)
+						action_id = self.lookahead.layers[depth].num_actions - b # we manually set the action_id as the last action (allin)  # ! didn't set datastruct for allin of the unfull action nodes
 						self.set_datastructures_from_tree_dfs(next_node, depth+1, action_id, next_parent_id, next_gp_id, next_action, cur_action_id)
 					# mask out empty actions
 					# self.lookahead.layers[depth+1].empty_action_mask.shape[0] == self.lookahead.layers[depth].num_actions

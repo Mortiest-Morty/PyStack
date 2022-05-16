@@ -131,7 +131,7 @@ class Lookahead():
 
 	def _compute_current_strategies(self):
 		''' Uses regret matching to generate the players' current strategies '''
-		for d in range(1,self.depth):
+		for d in range(1,self.depth): # 1~ d-1
 			layer = self.layers[d]
 			# [A{d-1}, B{d-2}, NTNAN{d-2}, b, I] = [A{d-1}, B{d-2}, NTNAN{d-2}, b, I]
 			positive_regrets = np.clip(layer.regrets, constants.regret_epsilon, constants.max_number)
@@ -152,7 +152,7 @@ class Lookahead():
 			probabilities of reaching each state of the lookahead.
 		'''
 		PC, HC, batch_size = constants.players_count, constants.hand_count, self.batch_size
-		for d in range(0, self.depth-1):
+		for d in range(0, self.depth-1):  # 0 ~ d-2
 			next_layer, layer, parent, grandparent = self.layers[d+1], self.layers[d], self.layers[d-1], self.layers[d-2]
 			p_num_terminal_actions = parent.num_terminal_actions if d > 0 else 0
 			p_num_bets = parent.num_bets if d > 0 else 1
