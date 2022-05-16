@@ -73,8 +73,8 @@ class CardCombinations():
 		@param: int :current street/round
 		@return int :number of possible next round boards
 		'''
-		num_cards_on_board = constants.board_card_count[street-1] # has to be -1, because of indexing
-		num_cards_on_next_board = constants.board_card_count[street]
+		num_cards_on_board = constants.board_card_count[street-1] # has to be -1, because of indexing  e.g. 4
+		num_cards_on_next_board = constants.board_card_count[street]  # 5
 		max_cards_in_deck = constants.card_count
 		num_cards_in_hand = constants.hand_card_count
 		num_left_cards = max_cards_in_deck - num_cards_in_hand - num_cards_on_board

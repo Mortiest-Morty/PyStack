@@ -62,18 +62,24 @@ class PokerTreeBuilder():
 		a1 = parent_node.street == 1
 		a2 = parent_node.current_player == constants.players.P1
 		a3 = parent_node.num_bets == 1
+
 		a5 = parent_node.street != 1
 		a6 = parent_node.current_player == constants.players.P2
-		a7 = parent_node.bets[0] == parent_node.bets[1]
+		a7 = parent_node.bets[0] == parent_node.bets[1]  # 2 players get the amount of bets
+
 		b1 = parent_node.street != constants.streets_count
+
 		b2 = parent_node.bets[0] == parent_node.bets[1]
+
 		b3 = parent_node.street == 1
 		b4 = parent_node.current_player == constants.players.P2
+
 		b5 = parent_node.street != 1
 		b6 = parent_node.current_player == constants.players.P1
+
 		b7 = parent_node.bets[0] != parent_node.bets[1]
 		b8 = parent_node.bets.max() < arguments.stack
-		if (a1 and a2 and a3) or (a5 and a6 and a7):
+		if (a1 and a2 and a3) or (a5 and a6 and a7):  # ! how can (a1 and a2 and a3) even happen? call?
 			check_node = Node()
 			check_node.type = constants.node_types.check
 			check_node.terminal = False
@@ -119,7 +125,7 @@ class PokerTreeBuilder():
 				child.board = parent_node.board
 				child.board_string = parent_node.board_string
 				child.bets = possible_bets[i]
-				child.num_bets = 0
+				child.num_bets = 0  # ! why ?
 				children.append(child)
 		return children
 
@@ -158,7 +164,7 @@ class PokerTreeBuilder():
 			elif i == 1:
 				current_node.actions[i] = constants.actions.ccall
 			else:
-				current_node.actions[i] = children[i].bets.max()
+				current_node.actions[i] = children[i].bets.max()  # raise to this number
 		current_node.depth = depth + 1
 		return current_node
 
@@ -175,10 +181,12 @@ class PokerTreeBuilder():
 		opponent_bet = node.bets[opponent]
 		assert(node.bets[current_player] <= opponent_bet)
 		# compute min possible raise size
-		max_raise_size = arguments.stack - opponent_bet # == call_size
-		min_raise_size = opponent_bet - node.bets[current_player]
-		min_raise_size = max(min_raise_size, arguments.ante)
-		min_raise_size = min(max_raise_size, min_raise_size)
+		# player 920
+		# opponent 970
+		max_raise_size = arguments.stack - opponent_bet # == call_size  # 30
+		min_raise_size = opponent_bet - node.bets[current_player]  # 50
+		min_raise_size = max(min_raise_size, arguments.ante)  # 100
+		min_raise_size = min(max_raise_size, min_raise_size)  # 30
 		if min_raise_size == 0:
 			return np.zeros([], dtype=arguments.int_dtype) # ]N,P], when N = 0
 		elif min_raise_size == max_raise_size: # all in

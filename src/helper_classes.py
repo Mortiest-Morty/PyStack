@@ -32,7 +32,7 @@ class Node():
 		self.current_player = None # int
 		self.bets = None # [P] (current bets from both players)
 		self.num_bets = None # int (used for additional betting in first round)
-		self.pot = None # int ( pot = max(self.bets) )
+		self.pot = None # int ( pot = max(self.bets) )  # ! min(self.bets)
 		self.children = [] # [Node,...] (list of nodes)
 		self.terminal = None # boolean (is this node terminal)
 		self.parent = None # Node

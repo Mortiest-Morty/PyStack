@@ -35,13 +35,17 @@ class NextRoundValue():
 			only difference: it creates cumulative cfvs for every next board '''
 		BC, PC, batch_size, HC = self.next_boards_count, constants.players_count, self.batch_size, constants.hand_count
 		# init inputs and outputs to neural net
+		# b*p, 48, 1326*2+1+69
 		self.next_round_inputs = np.zeros([batch_size,BC,HC*PC + 1 + self.num_board_features], dtype=arguments.dtype)
+		# b*p, 48, 2, 1326
 		self.next_round_values = np.zeros([batch_size,BC,PC,HC], dtype=arguments.dtype)
 		# handling board feature for nn [BC,69] and initing board masks (what hands are possible given that board)
+		# 48, 69
 		next_boards_features = np.zeros([BC, self.num_board_features], dtype=arguments.dtype)
+		# 48, 1326
 		self.next_boards_mask = np.zeros([BC,HC], dtype=bool)
 		from tqdm import tqdm
-		for i, next_board in enumerate(tqdm(self.next_boards)):
+		for i, next_board in enumerate(tqdm(self.next_boards)):  # self.next_boards: [48, 5]
 			next_boards_features[i] = card_tools.convert_board_to_nn_feature(next_board)
 			self.next_boards_mask[i] = card_tools.get_possible_hands_mask(next_board)
 		next_boards_features = np.expand_dims(next_boards_features, axis=0) # reshape: [B,69] -> [1,B,69]
@@ -50,12 +54,14 @@ class NextRoundValue():
 		# handling pot feature for nn
 		# repeating pot_sizes: [b,1] -> [b,B]
 		# [ b, B, P x I + 1 + 69 ] = [b,B] / scalar
-		self.next_round_inputs[ : , : , PC*HC ] = np.repeat(self.pot_sizes, BC, axis=1) / arguments.stack
+		self.next_round_inputs[ : , : , PC*HC ] = np.repeat(self.pot_sizes, BC, axis=1) / arguments.stack  # p*b, 48
 		# init normalization (used to normalize values after masking with self.next_boards_mask)
-		num_possible_boards = card_combinations.count_next_boards_possible_boards(self.street)
+		num_possible_boards = card_combinations.count_next_boards_possible_boards(self.street)  # 46
 		self.root_nodes_sum_normalization = 1 / num_possible_boards
 		# init cumulative cfvs and their normalization (used for self.get_stored_value_on_board())
+		# p*b, 48, 2
 		self.cumulative_norm = np.zeros([ batch_size, BC, PC ], dtype=arguments.dtype)
+		# p*b, 48, 2, 1326
 		self.cumulative_cfvs = np.zeros([ batch_size, BC, PC, HC ], dtype=arguments.dtype)
 
 
@@ -63,9 +69,12 @@ class NextRoundValue():
 		''' init datastructures, where input is only single board (self.current_board) '''
 		PC, batch_size, HC = constants.players_count, self.batch_size, constants.hand_count
 		# init inputs and outputs to neural net
+		# b*p, 1, 1326*2+1+69
 		self.current_round_inputs = np.zeros([batch_size, 1,HC*PC + 1 + self.num_board_features], dtype=arguments.dtype)
+		# b*p, 1, 2, 1326
 		self.current_round_values = np.zeros([batch_size, 1,PC,HC], dtype=arguments.dtype)
 		# init current board's mask (possible hands, given that board)
+		# 1, 1326
 		self.current_board_mask = np.zeros([1,HC], dtype=bool)
 		self.current_board_mask[0] = card_tools.get_possible_hands_mask(self.current_board)
 		# fill inputs with board features
@@ -87,14 +96,14 @@ class NextRoundValue():
 		self.iter = 0
 		# setting up current board and possible next boards
 		self.current_board = board
-		self.next_boards = card_tools.get_next_round_boards(self.current_board)
-		self.next_boards_count = self.next_boards.shape[0]
+		self.next_boards = card_tools.get_next_round_boards(self.current_board)  # 48, 5
+		self.next_boards_count = self.next_boards.shape[0]  # 48
 		# init pot sizes [b, 1], where p - number of pot sizes, b - batch size (here not the same as in other files)
-		self.pot_sizes = np.repeat(pot_sizes.reshape([-1,1]), batch_size, axis=1)
-		self.pot_sizes = self.pot_sizes.reshape([-1,1])
-		self.batch_size = self.pot_sizes.shape[0]
+		self.pot_sizes = np.repeat(pot_sizes.reshape([-1,1]), batch_size, axis=1)  # p, b
+		self.pot_sizes = self.pot_sizes.reshape([-1,1])  # p*b, 1
+		self.batch_size = self.pot_sizes.shape[0]  # b*p
 		# setting up num board features used in neural network (all boards will give same shape = 69)
-		self.num_board_features = card_tools.convert_board_to_nn_feature(np.zeros([])).shape[0]
+		self.num_board_features = card_tools.convert_board_to_nn_feature(np.zeros([])).shape[0]  # 69
 		# init variables, used for next street root nodes approximation
 		# and for current street leaf nodes approximation
 		self._init_root_approximation_vars()

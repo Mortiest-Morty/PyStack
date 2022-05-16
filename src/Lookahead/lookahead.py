@@ -98,6 +98,8 @@ class Lookahead():
 		'''
 		P1, P2 = constants.players.P1, constants.players.P2
 		# can be cfvs or range
+		# data structures [A{d-1}, B{d-2}, NTNAN{d-2}, b, P, I]
+		# [actions, parent_action, grandparents, batch, players, range]
 		self.layers[0].ranges[ 0 , 0 , 0 , : , P1 , : ] = player_range.copy()
 		if opponent_cfvs is None:
 			self.layers[0].ranges[ 0 , 0 , 0 , : , P2 , : ] = opponent_range.copy()

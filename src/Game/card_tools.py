@@ -105,9 +105,10 @@ class CardTools():
 
 
 	def _build_boards(self, boards, cur_board, out, card_index, last_index, base_index):
+		# boards[out, 1], cur_board[5], out[48, 5], BCC[street-1] + 1 = 5, BCC[street] = 5, BCC[street-1] + 1 = 5
 		CC = constants.card_count
 		if card_index == last_index + 1:
-			for i in range(1, last_index+1):
+			for i in range(1, last_index+1):  # 1~5
 				boards[0][boards[1]-1][i-1] = cur_board[i-1] # (boards[0] - boards, boards[1] - index)
 			out[boards[1]-1] = cur_board.copy()
 			boards[1] += 1
@@ -115,9 +116,9 @@ class CardTools():
 			startindex = 1
 			if card_index > base_index:
 				startindex = int(cur_board[card_index-1-1] + 1)
-			for i in range(startindex, CC+1):
+			for i in range(startindex, CC+1):  # 1, 54
 				good = True
-				for j in range(1, card_index - 1 + 1):
+				for j in range(1, card_index - 1 + 1):  # 1~4
 					if cur_board[j-1] == i:
 						good = False
 				if good:
@@ -133,9 +134,9 @@ class CardTools():
 		BCC, CC = constants.board_card_count, constants.card_count
 		street = self.board_to_street(board)
 		boards_count = card_combinations.count_next_street_boards(street)
-		out = np.zeros([ boards_count, BCC[street] ], dtype=arguments.int_dtype)
+		out = np.zeros([ boards_count, BCC[street] ], dtype=arguments.int_dtype)  # 48, 5
 		boards = [out,1] # (boards, index)
-		cur_board = np.zeros([ BCC[street] ], dtype=arguments.int_dtype)
+		cur_board = np.zeros([ BCC[street] ], dtype=arguments.int_dtype)  # 5
 		if board.ndim > 0:
 			for i in range(board.shape[0]):
 				cur_board[i] = board[i] + 1
