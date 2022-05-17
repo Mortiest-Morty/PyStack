@@ -45,9 +45,9 @@ class Lookahead():
 		out = LookaheadResults()
 		# next street CFV's
 		try:
-			out.next_street_cfvs = self.cfvs_approximator.get_stored_cfvs_of_all_next_round_boards()
-			out.next_boards = self.cfvs_approximator.next_boards
-			out.action_to_index = self.action_to_index
+			out.next_street_cfvs = self.cfvs_approximator.get_stored_cfvs_of_all_next_round_boards()  # [b*p,B,P,I]
+			out.next_boards = self.cfvs_approximator.next_boards  # [48, 5]
+			out.action_to_index = self.action_to_index  # ccall action
 			out.next_round_pot_sizes = self.next_round_pot_sizes
 		except:
 			print('WARNING: THERE ARE NO NODES THAT NEEDS APPROXIMATION (lookahead.cfvs_approximator is not defined)')
@@ -65,11 +65,11 @@ class Lookahead():
 		else:
 			# reshape: [1, 1, 1, b, P, I] - > [b, P, I]
 			first_layer_avg_cfvs = self.layers[0].cfvs_avg.reshape([batch_size,PC,HC])
-			out.root_cfvs = first_layer_avg_cfvs[ : , P2 , : ].copy()
+			out.root_cfvs = first_layer_avg_cfvs[ : , P2 , : ].copy()  # current's self
 			# swap cfvs indexing
 			out.root_cfvs_both_players = np.zeros_like(first_layer_avg_cfvs)
-			out.root_cfvs_both_players[ : , P2 , : ] = first_layer_avg_cfvs[ : , P1 , : ].copy()
-			out.root_cfvs_both_players[ : , P1 , : ] = first_layer_avg_cfvs[ : , P2 , : ].copy()
+			out.root_cfvs_both_players[ : , P2 , : ] = first_layer_avg_cfvs[ : , P1 , : ].copy()  # -> 0: current's self
+			out.root_cfvs_both_players[ : , P1 , : ] = first_layer_avg_cfvs[ : , P2 , : ].copy()  # -> 1: current's opponent
 		# children CFVs
 		# slicing and reshaping: [A{0}, 1, 1, b, P, I] -> [A{0}, b, I]
 		out.children_cfvs = self.layers[1].cfvs_avg[ : , : , : , : , P1 , : ].reshape([-1,batch_size,HC])
@@ -186,7 +186,7 @@ class Lookahead():
 			values, computes their cfvs at all states of the lookahead.
 		'''
 		PC, HC, batch_size = constants.players_count, constants.hand_count, self.batch_size
-		for d in range(self.depth-1, 0, -1):
+		for d in range(self.depth-1, 0, -1):  # d-1~1
 			layer, parent = self.layers[d], self.layers[d-1]
 			num_gp_terminal_actions = self.layers[d-2].num_terminal_actions if d > 1 else 0
 			num_ggp_nonallin_bets = self.layers[d-3].num_nonallin_bets if d > 2 else 1
@@ -255,7 +255,7 @@ class Lookahead():
 			total regrets for every state in the lookahead.
 		'''
 		HC, batch_size = constants.hand_count, self.batch_size
-		for d in range(self.depth-1, 0, -1):
+		for d in range(self.depth-1, 0, -1):  # d-1~1
 			layer, parent = self.layers[d], self.layers[d-1] # current layer, parent layer
 			gp_num_terminal_actions = self.layers[d-2].num_terminal_actions if d > 1 else 0
 			gp_num_bets = self.layers[d-2].num_bets if d > 1 else 1
@@ -280,9 +280,11 @@ class Lookahead():
 		'''
 		P1, P2, HC = constants.players.P1, constants.players.P2, constants.hand_count
 		# note that CFVs indexing is swapped, thus the CFVs for the reconstruction player are for player '1'
+		# for 0 ~ d-2 : acting player == 1
+		# cfvs [1, 1, 1, b, P, I]
 		opponent_cfvs = self.layers[0].cfvs[ : , : , : , : , P1 , : ].reshape(HC)
 		opponent_range = self.reconstruction_gadget.compute_opponent_range(opponent_cfvs)
-		# [1, 1, 1, P, I] = [I]
+		# [1, 1, 1, 1, P, I] = [I]
 		self.layers[0].ranges[ : , : , : , : , P2 , : ] = opponent_range
 
 
@@ -298,18 +300,18 @@ class Lookahead():
 			# ranges.shape = [ self.num_pot_sizes x self.batch_size, P, I ]
 			ranges = self._get_ranges_from_transitioning_nodes()
 			# order ranges to same order as trained examples of neural network
-			if self.tree.current_player == P1:  # pre-flop
+			if self.tree.current_player == P1:
 				temp = ranges.copy()
-				ranges[ : , P1, : ] = temp[ : , P2, : ]  # -> 0: P2
-				ranges[ : , P2, : ] = temp[ : , P1, : ]  # -> 1: P1
+				ranges[ : , P1, : ] = temp[ : , P2, : ]  # -> 0: current's opponent
+				ranges[ : , P2, : ] = temp[ : , P1, : ]  # -> 1: current's self
 			# use neural net to approximate cfvs
 			# cfvs.shape = [ self.num_pot_sizes x self.batch_size, P, I ]
 			approximated_cfvs = self.cfvs_approximator.evaluate_ranges(ranges)
 			# now the neural net outputs for P1 and P2 respectively, so we need to swap the output values if necessary
 			if self.tree.current_player == P2:
 				temp = approximated_cfvs.copy()
-				approximated_cfvs[ : , P1, : ] = temp[ : , P2, : ]  # -> 0: P2
-				approximated_cfvs[ : , P2, : ] = temp[ : , P1, : ]  # -> 1: P1
+				approximated_cfvs[ : , P1, : ] = temp[ : , P2, : ]  # -> 0: current's self
+				approximated_cfvs[ : , P2, : ] = temp[ : , P1, : ]  # -> 1: current's opponent
 			# store outputs into respective nodes
 			self._store_cfvs_to_transitioning_nodes(approximated_cfvs)
 		# equities of all other nodes are easily computable

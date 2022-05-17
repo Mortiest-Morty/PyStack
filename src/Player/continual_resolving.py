@@ -61,18 +61,18 @@ class ContinualResolving():
 			next_street_cfvs = self.cache.get_next_street_cfvs(self.prev_bets)
 		else: # resolve_results.next_street_cfvs is not None:
 			print('LOADING FROM PREV RESULTS')
-			next_street_cfvs = resolve_results.next_street_cfvs
+			next_street_cfvs = resolve_results.next_street_cfvs  # [b*p,B,P,I]
 		# save cfvs for particular board
-		for i, next_board in enumerate(resolve_results.next_boards):
+		for i, next_board in enumerate(resolve_results.next_boards):  # [48, 5]
 			if card_tools.same_boards(current_board, next_board):
 				board_cfvs = next_street_cfvs[:,i,:,:]
 		# get next street root node outputs. shape = [self.num_pot_sizes * self.batch_size, P, I]
 		# convert action idx to batch index
 		action = resolve_results.actions[action_idx]
-		batch_index = resolve_results.action_to_index[action]
+		batch_index = resolve_results.action_to_index[action]  # ! missing *batch_size?
 		# get cfvs for current player, given some action
-		cfvs = board_cfvs[ batch_index , self.player_position ]
-		pot = resolve_results.next_round_pot_sizes[batch_index]
+		cfvs = board_cfvs[ batch_index , self.player_position ]  # [I]
+		pot = resolve_results.next_round_pot_sizes[batch_index]  # 1
 		return cfvs * pot
 
 
@@ -107,7 +107,7 @@ class ContinualResolving():
 		print( "strat: {}, bets: {}, sampled_bet: {}".format(np.array2string(strategy, suppress_small=True, precision=3), results.actions, sampled_bet) )
 		# update the invariants based on our action # [I] = [I]
 		self.opponent_cfvs = results.children_cfvs[action_idx,0,:] # [A,b,I], here b = 1
-		# [I] *= [I]
+		# update player's range [I] *= [I]
 		self.player_range *= results.strategy[action_idx,0,:] # [A,b,I], here b = 1
 		self.player_range /= self.player_range.sum()	# normalize
 		# update history variables

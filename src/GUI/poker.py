@@ -79,7 +79,7 @@ class DoylesGame():
 			pot = self.stack - self.player_chips
 			self.player_chips = self.stack - pot
 			self.bot_chips = self.stack + pot
-		elif winner == 'noone': # draw
+		elif winner == 'noone': # draw  # ! this is wrong
 			pot = 0
 			self.player_chips = self.stack
 			self.bot_chips = self.stack
